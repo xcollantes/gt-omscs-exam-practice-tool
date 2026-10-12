@@ -19,7 +19,7 @@ function el(tag, props = {}, ...kids) {
     else if (k in node) node[k] = v;
     else node.setAttribute(k, v);
   }
-  node.append(...kids.flat().filter((k) => k != null));
+  node.append(...kids.flat().filter((k) => k != null && k !== false));
   return node;
 }
 
