@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CS 6250 Study</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f9f9f7;
+      --surface: #fcfcfb;
+      --ink: #0b0b0b;
+      --ink-2: #52514e;
+      --muted: #898781;
+      --grid: #e1e0d9;
+      --axis: #c3c2b7;
+      --border: rgba(11, 11, 11, 0.10);
+      --hover: rgba(11, 11, 11, 0.04);
+      --accent: #2a78d6;
+      --accent-track: #cde2fb;
+      --good: #0ca30c;
+      --good-wash: rgba(12, 163, 12, 0.08);
+      --bad: #d03b3b;
+      --bad-wash: rgba(208, 59, 59, 0.08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #0d0d0d;
+        --surface: #1a1a19;
+        --ink: #f0efec;
+        --ink-2: #c3c2b7;
+        --muted: #898781;
+        --grid: #2c2c2a;
+        --axis: #383835;
+        --border: rgba(255, 255, 255, 0.10);
+        --hover: rgba(255, 255, 255, 0.05);
+        --accent: #3987e5;
+        --accent-track: rgba(57, 135, 229, 0.16);
+        --good-wash: rgba(12, 163, 12, 0.14);
+        --bad-wash: rgba(208, 59, 59, 0.16);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    header, main { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding-top: 16px; padding-bottom: 8px;
+    }
+    header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+    nav { display: flex; gap: 4px; }
+    h2 { font-size: 20px; margin: 24px 0 12px; font-weight: 600; }
+    h3 { font-size: 15px; margin: 0 0 12px; font-weight: 600; }
+    button {
+      font: inherit; color: inherit; cursor: pointer;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 14px;
+    }
+    button:hover { background: var(--hover); }
+    button.primary {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+      font-weight: 600;
+    }
+    button:disabled { opacity: 0.5; cursor: default; }
+    button:focus-visible, input:focus-visible, svg:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 2px;
+    }
+    nav button[aria-current="page"] { border-color: var(--accent); }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; margin-bottom: 16px;
+    }
+    .muted { color: var(--muted); }
+    .secondary { color: var(--ink-2); }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .spread { justify-content: space-between; }
+    [hidden] { display: none !important; }
+
+    /* Start */
+    .modules { display: grid; gap: 6px; margin-bottom: 16px; }
+    .modules label {
+      display: flex; gap: 10px; align-items: baseline; padding: 6px 8px;
+      border-radius: 8px; cursor: pointer;
+    }
+    .modules label:hover { background: var(--hover); }
+    input[type="number"] {
+      font: inherit; width: 90px; padding: 6px 8px; color: inherit;
+      background: var(--surface); border: 1px solid var(--axis);
+      border-radius: 8px;
+    }
+
+    /* Quiz */
+    .quiz-meta { font-size: 14px; color: var(--ink-2); margin-bottom: 12px; }
+    .timers { font-variant-numeric: tabular-nums; }
+    figure { margin: 0 0 16px; text-align: center; }
+    figure img {
+      max-width: 100%; max-height: 45vh; object-fit: contain;
+      border-radius: 8px; border: 1px solid var(--border);
+    }
+    figcaption { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .stem { white-space: pre-line; font-size: 17px; margin: 0 0 16px; }
+    .options { display: grid; gap: 8px; }
+    .option {
+      display: flex; gap: 12px; text-align: left; align-items: flex-start;
+      padding: 10px 14px; border-width: 2px;
+    }
+    .option .key {
+      flex: none; min-width: 1.6em; font-weight: 600; color: var(--ink-2);
+    }
+    .option .tag { margin-left: auto; flex: none; font-size: 13px;
+      font-weight: 600; padding-left: 8px; white-space: nowrap; }
+    .option.correct { border-color: var(--good); background: var(--good-wash); }
+    .option.wrong { border-color: var(--bad); background: var(--bad-wash); }
+    .options.answered .option { cursor: default; }
+    .verdict { font-weight: 600; margin: 16px 0 4px; }
+    .verdict .icon { display: inline-block; width: 1.2em; }
+    .verdict.good .icon { color: var(--good); }
+    .verdict.bad .icon { color: var(--bad); }
+    .why { color: var(--ink-2); margin: 0 0 16px; }
+    .kbd-hint { font-size: 13px; }
+    .warn { color: var(--bad); font-size: 14px; }
+
+    /* Summary & dashboard */
+    .tiles {
+      display: grid; gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      margin-bottom: 16px;
+    }
+    .tile { padding: 14px 16px; margin: 0; }
+    .tile .label { font-size: 13px; color: var(--ink-2); }
+    .tile .value { font-size: 26px; font-weight: 600; }
+    .tile .sub { font-size: 13px; color: var(--muted); }
+    .hero .value { font-size: 48px; line-height: 1.1; }
+    .chart { position: relative; }
+    .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .chart text { fill: var(--muted); font-size: 11px;
+      font-variant-numeric: tabular-nums; }
+    .tooltip {
+      position: absolute; pointer-events: none; z-index: 1;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; font-size: 13px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); white-space: nowrap;
+    }
+    .tooltip strong { font-size: 15px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 8px 6px;
+      border-bottom: 1px solid var(--grid); }
+    th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .bars { display: grid; gap: 10px; }
+    .bar-row {
+      display: grid; gap: 4px 12px; align-items: center;
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .bar-row .name { font-size: 14px; }
+    .bar-row .figs { font-size: 13px; color: var(--ink-2);
+      font-variant-numeric: tabular-nums; text-align: right; }
+    .meter {
+      grid-column: 1 / -1; height: 8px; border-radius: 4px;
+      background: var(--accent-track); overflow: hidden;
+    }
+    .meter > div { height: 100%; background: var(--accent);
+      border-radius: 0 4px 4px 0; }
+    details { border-bottom: 1px solid var(--grid); padding: 8px 0; }
+    summary { cursor: pointer; }
+    details .why { margin: 8px 0 0; }
+    .missed { border-bottom: 1px solid var(--grid); padding: 12px 0; }
+    .missed:last-child { border-bottom: 0; }
+    .missed p { margin: 4px 0; }
+    .missed .stem { font-size: 15px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CS 6250 Study</h1>
+    <nav id="nav">
+      <button data-view="start" aria-current="page">Practice</button>
+      <button data-view="dashboard">Dashboard</button>
+    </nav>
+  </header>
+  <main>
+    <section id="start">
+      <h2>Start a run</h2>
+      <div class="card">
+        <h3>Modules</h3>
+        <div class="modules" id="modules"></div>
+        <div class="row">
+          <label for="count">Questions</label>
+          <input type="number" id="count" min="1" value="20">
+          <span class="muted" id="pool-size"></span>
+        </div>
+      </div>
+      <button class="primary" id="start-btn">Start</button>
+    </section>
+
+    <section id="quiz" hidden>
+      <div class="row spread quiz-meta">
+        <span id="progress"></span>
+        <span class="timers" id="timers"></span>
+      </div>
+      <div class="card">
+        <div class="quiz-meta" id="q-meta"></div>
+        <figure id="figure" hidden>
+          <img id="figure-img" alt="">
+          <figcaption id="figure-cap"></figcaption>
+        </figure>
+        <p class="stem" id="stem"></p>
+        <div class="options" id="options"></div>
+        <div id="feedback" hidden>
+          <p class="verdict" id="verdict"></p>
+          <p class="why" id="why"></p>
+          <p class="warn" id="save-warn" hidden></p>
+        </div>
+      </div>
+      <div class="row spread">
+        <button id="end-btn">End run</button>
+        <span class="muted kbd-hint" id="kbd-hint"></span>
+        <button class="primary" id="next-btn" disabled>Next</button>
+      </div>
+    </section>
+
+    <section id="summary" hidden></section>
+    <section id="dashboard" hidden></section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
