@@ -329,7 +329,33 @@ async function loadDashboard() {
       bars(topics.map((x) => ({ ...x, name: `M${x.module} · ${x.topic}` })))),
     s.most_missed.length ? el('div', { class: 'card' },
       el('h3', {}, 'Most missed questions'),
-      s.most_missed.map(missedDetails)) : null);
+      s.most_missed.map(missedDetails)) : null,
+    resetCard(t));
+}
+
+function resetCard(t) {
+  const warn = el('p', { class: 'warn', hidden: true });
+  const ask = el('button', { onclick: () => toggle(true) }, 'Reset stats…');
+  const confirmRow = el('div', { class: 'row', hidden: true },
+    el('span', {}, `Delete all ${t.runs} runs and ${t.answered} answers? `
+      + 'This cannot be undone.'),
+    el('button', { class: 'danger', onclick: resetStats }, 'Delete everything'),
+    el('button', { onclick: () => toggle(false) }, 'Cancel'));
+  function toggle(confirming) {
+    ask.hidden = confirming;
+    confirmRow.hidden = !confirming;
+  }
+  async function resetStats() {
+    try {
+      const res = await fetch('/api/stats', { method: 'DELETE' });
+      if (!res.ok) throw new Error(`server returned ${res.status}`);
+      loadDashboard();
+    } catch (e) {
+      warn.textContent = `Reset failed: ${e.message}`;
+      warn.hidden = false;
+    }
+  }
+  return el('div', { class: 'card' }, el('h3', {}, 'Reset'), ask, confirmRow, warn);
 }
 
 function bars(rows) {
