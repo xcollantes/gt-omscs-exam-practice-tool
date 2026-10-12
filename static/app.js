@@ -3,6 +3,9 @@
 const $ = (id) => document.getElementById(id);
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const VIEWS = ['start', 'quiz', 'summary', 'dashboard'];
+// Exam benchmark: 20 questions in 120 minutes.
+const BENCH_QUESTIONS = 20;
+const BENCH_MS = 120 * 60 * 1000;
 
 let pool = [];
 let byId = {};
@@ -70,6 +73,13 @@ function tile(value, label, sub = null, hero = false) {
     el('div', { class: 'label' }, label),
     el('div', { class: 'value' }, value),
     sub && el('div', { class: 'sub' }, sub));
+}
+
+function paceTile(avgMs) {
+  const projected = avgMs * BENCH_QUESTIONS;
+  const ok = projected <= BENCH_MS;
+  return tile(clock(projected), `${BENCH_QUESTIONS}-question pace`,
+    `${ok ? '✓' : '✗ Over:'} ${pct(projected, BENCH_MS)}% of ${clock(BENCH_MS)}`);
 }
 
 function show(view) {
@@ -272,7 +282,8 @@ function renderSummary(r, wallMs) {
     el('div', { class: 'tiles' },
       tile(`${pct(correct, n)}%`, 'Score', `${correct} of ${n} correct`, true),
       tile(clock(wallMs), 'Session time', `${clock(answerMs)} spent answering`),
-      tile(secs(answerMs / n), 'Average per question')),
+      tile(secs(answerMs / n), 'Average per question'),
+      paceTile(answerMs / n)),
     el('div', { class: 'card' },
       el('h3', {}, missed.length ? `Missed (${missed.length})` : 'No misses this run'),
       missed.map((x) => missedQuestion(x.q, x.chosen))),
@@ -307,6 +318,7 @@ async function loadDashboard() {
         `${t.correct} of ${t.answered} answers`, true),
       tile(String(t.runs), 'Runs'),
       tile(secs(t.avg_ms), 'Average per question'),
+      paceTile(t.avg_ms),
       tile(`${t.seen}/${t.pool_size}`, 'Questions seen', `${pct(t.seen, t.pool_size)}% of the pool`)),
     el('div', { class: 'card' }, el('h3', {}, 'Score per run'), scoreChart(s.runs)),
     el('div', { class: 'card' }, el('h3', {}, 'Runs'), runsTable(s.runs)),
@@ -333,7 +345,8 @@ function bars(rows) {
 }
 
 function runsTable(runs) {
-  const heads = ['Date', 'Modules', 'Score', 'Correct', 'Answering', 'Session', 'Avg / q'];
+  const heads = ['Date', 'Modules', 'Score', 'Correct', 'Answering', 'Session',
+    'Avg / q', `${BENCH_QUESTIONS}-q pace`];
   return el('div', { class: 'table-wrap' }, el('table', {},
     el('thead', {}, el('tr', {},
       heads.map((h, i) => el('th', { class: i > 1 ? 'num' : '' }, h)))),
@@ -345,7 +358,13 @@ function runsTable(runs) {
         + (r.answered < r.question_count ? ` of ${r.question_count}` : '')),
       el('td', { class: 'num' }, clock(r.answer_ms)),
       el('td', { class: 'num' }, clock(r.wall_ms)),
-      el('td', { class: 'num' }, secs(r.answer_ms / r.answered)))))));
+      el('td', { class: 'num' }, secs(r.answer_ms / r.answered)),
+      el('td', { class: 'num' }, paceCell(r.answer_ms / r.answered)))))));
+}
+
+function paceCell(avgMs) {
+  const projected = avgMs * BENCH_QUESTIONS;
+  return `${clock(projected)} ${projected <= BENCH_MS ? '✓' : '✗ over'}`;
 }
 
 function missedDetails(m) {
