@@ -143,8 +143,16 @@ def get_stats(conn: sqlite3.Connection, pool_size: int) -> dict:
     }
 
 
+def reset_stats(conn: sqlite3.Connection) -> dict:
+    """Delete every recorded run and answer; return how many went."""
+    with conn:
+        answers = conn.execute("DELETE FROM answers").rowcount
+        runs = conn.execute("DELETE FROM runs").rowcount
+    return {"deleted_runs": runs, "deleted_answers": answers}
+
+
 class Handler(SimpleHTTPRequestHandler):
-    """Serves static/ plus GET /api/stats and POST /api/answers."""
+    """Serves static/ plus /api/stats (GET, DELETE) and POST /api/answers."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(STATIC), **kwargs)
@@ -154,6 +162,12 @@ class Handler(SimpleHTTPRequestHandler):
             return super().do_GET()
         with closing(connect(self.server.db_path)) as conn:
             self.send_json(get_stats(conn, len(self.server.questions)))
+
+    def do_DELETE(self):
+        if self.path != "/api/stats":
+            return self.send_json({"error": "not found"}, 404)
+        with closing(connect(self.server.db_path)) as conn:
+            self.send_json(reset_stats(conn))
 
     def do_POST(self):
         if self.path != "/api/answers":

@@ -29,10 +29,11 @@ def base_url(tmp_path):
     server.server_close()
 
 
-def call(url: str, body: dict | None = None) -> tuple[int, dict]:
+def call(url: str, body: dict | None = None,
+         method: str | None = None) -> tuple[int, dict]:
     data = json.dumps(body).encode() if body is not None else None
     request = urllib.request.Request(
-        url, data, {"Content-Type": "application/json"})
+        url, data, {"Content-Type": "application/json"}, method=method)
     try:
         with urllib.request.urlopen(request) as response:
             return response.status, json.load(response)
@@ -80,3 +81,15 @@ def test_invalid_answers_are_rejected(base_url, body):
 def test_same_question_twice_in_a_run_is_rejected(base_url):
     assert call(f"{base_url}/api/answers", answer("M1-Q1", "A"))[0] == 200
     assert call(f"{base_url}/api/answers", answer("M1-Q1", "B"))[0] == 400
+
+
+def test_reset_deletes_every_run_and_answer(base_url):
+    call(f"{base_url}/api/answers", answer("M1-Q1", "A"))
+    call(f"{base_url}/api/answers", answer("M2-Q1", "True", run_id="run-2"))
+
+    assert call(f"{base_url}/api/stats", method="DELETE") == (
+        200, {"deleted_runs": 2, "deleted_answers": 2})
+
+    _, stats = call(f"{base_url}/api/stats")
+    assert stats["totals"]["answered"] == 0
+    assert stats["runs"] == [] and stats["most_missed"] == []
